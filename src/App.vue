@@ -7,11 +7,60 @@ export default {
       base_api_url: 'http://127.0.0.1:8000',
       posts_endpoint: '/api/posts',
       posts: null,
-      search_text: ''
+      search_text: '',
+      name: '',
+      email: '',
+      message: '',
+      success: false,
+      errors: false,
+      loading: false
+
     }
   },
   methods: {
 
+
+
+    /* Contact form */
+    submitMessage() {
+      this.loading = true;
+      // create the payload for the post request
+      const payload = {
+        name: this.name,
+        email: this.email,
+        message: this.message
+      }
+
+      console.log(payload);
+      // send a post request 
+      axios.post('http://127.0.0.1:8000/api/contacts', payload)
+        .then(response => {
+
+          console.log(response);
+          this.loading = false;
+
+          if (response.data.success) {
+            this.success = 'Thanks for your message'
+            this.errors = false
+            this.name = ''
+            this.email = ''
+            this.message = ''
+
+          } else {
+            // you have validation errors to handle
+            console.log(response);
+            this.errors = response.data.errors
+            this.success = false
+          }
+
+
+        })
+        .catch(err => {
+          console.log(err);
+        })
+      // handle the response
+
+    },
 
     goTo(url) {
       console.log(url)
@@ -48,6 +97,79 @@ export default {
 </script>
 
 <template>
+
+  <button class="btn btn-link position-fixed end-0" type="button" data-bs-toggle="offcanvas"
+    data-bs-target="#contactForm" aria-controls="contactForm">
+    Contacts
+  </button>
+
+  <div class="offcanvas offcanvas-end" data-bs-backdrop="static" tabindex="-1" id="contactForm"
+    aria-labelledby="staticBackdropLabel">
+    <div class="offcanvas-header">
+      <h5 class="offcanvas-title" id="staticBackdropLabel">
+        Get in Touch
+      </h5>
+      <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+      <div>
+
+        <div class="alert alert-success" role="alert" v-if="success">
+          <strong>Success</strong> {{ success }}
+        </div>
+
+
+        <div class="alert alert-danger" role="alert" v-if="errors">
+          <strong>There are erros!</strong>
+          <ul>
+            <li v-for="error in errors">
+              {{ error[0] }}
+            </li>
+          </ul>
+        </div>
+
+
+
+        <p class="lead">
+          Contact me I'll get back to you in a jiffy
+        </p>
+
+        <form @submit.prevent="submitMessage()">
+
+
+          <div class="mb-3">
+            <label for="name" class="form-label">name</label>
+            <input type="text" class="form-control" name="name" id="name" aria-describedby="nameHelper"
+              placeholder="Luke skywalker" v-model="name" />
+            <small id="nameHelper" class="form-text text-muted">Type your full name </small>
+          </div>
+
+
+          <div class="mb-3">
+            <label for="email" class="form-label">Email</label>
+            <input type="email" class="form-control" name="email" id="email" aria-describedby="emailHelper"
+              placeholder="abc@mail.com" v-model="email" />
+            <small id="emailHelper" class="form-text text-muted">Type your full email addrees </small>
+          </div>
+
+          <div class="mb-3">
+            <label for="message" class="form-label">Message</label>
+            <textarea class="form-control" name="message" id="message" rows="5" v-model="message"></textarea>
+          </div>
+
+
+          <button type="submit" class="btn btn-dark" :disabled="loading">
+            {{loading ? 'Sending... 📨' : 'Send'}}
+          </button>
+
+
+
+        </form>
+
+      </div>
+    </div>
+  </div>
+
 
   <div class="p-5 mb-4 bg-light rounded-3">
     <div class="container py-5">
@@ -101,8 +223,7 @@ export default {
 
             <div class="card-footer">
               <!-- Modal trigger button -->
-              <button type="button" class="btn btn-primary" data-bs-toggle="modal"
-                :data-bs-target="`#post-${post.id}`">
+              <button type="button" class="btn btn-primary" data-bs-toggle="modal" :data-bs-target="`#post-${post.id}`">
                 View
               </button>
 
